@@ -1,0 +1,2 @@
+# Do not include nix build results in git
+result
