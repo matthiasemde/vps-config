@@ -1,0 +1,20 @@
+# The port frpc clients will connect to
+bindPort = 7000
+
+# vhostHTTPPort = 80
+# vhostHTTPSPort = 443
+# vhostHTTPTimeout = 600
+
+# If subDomainHost is not empty, you can set subdomain when type is http or https in frpc's configure file
+# When subdomain is test, the host used by routing is test.frps.com
+# subDomainHost = "emdecloud.de"
+
+# Enable dashboard to monitor connections
+webServer.addr = "0.0.0.0"
+webServer.port = 7500
+webServer.user = "minad"
+webServer.password = "{{ .Envs.FRP_DASHBOARD_PWD }}"
+
+# Authentication token (must match in frpc)
+auth.method = "token"
+auth.token = "{{ .Envs.FRP_TOKEN }}"

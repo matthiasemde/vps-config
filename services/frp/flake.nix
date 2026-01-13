@@ -10,23 +10,9 @@
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
       frpPkg = pkgs.frp;
-      defaultConfig = pkgs.writeText "frps.toml" ''
-        [common]
-        # The port frpc clients will connect to
-        bind_port = 7000
-
-        # Enable dashboard to monitor connections
-        dashboard_port = 7500
-        dashboard_user = "minad"
-        dashboard_pwd = "{{ .Envs.FRP_DASHBOARD_PWD }}"
-
-        # Optional: authentication token (must match in frpc)
-        # This secures the tunnel so random people can’t connect
-        token = "{{ .Envs.FRP_TOKEN }}"
-      '';
       configDerivation = pkgs.runCommand "frp-config" { } ''
         mkdir -p $out/etc/frp
-        cp ${defaultConfig} $out/etc/frp/frps.toml
+        cp ${./frps.toml} $out/etc/frp/frps.toml
       '';
       frpsImage = pkgs.dockerTools.buildImage {
         name = "frps";
