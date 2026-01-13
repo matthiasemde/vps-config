@@ -98,7 +98,7 @@ Requires=docker.service
 Restart=always
 # Pre remove old container if exists
 ExecStartPre=docker rm -f frps
-ExecStart=docker run --name frps --restart unless-stopped -p 7000:7000 -p 7500:7500 --env-file ${ENV_FILE} ${IMG_REF}
+ExecStart=docker run --name frps --restart unless-stopped -p 80:80 -p 443:443 -p 25565:25565 -p 7777:7777 -p 7777:7777/udp -p 8888:8888 -p 7000:7000 -p 7500:7500 -p 3478:3478 -p 3478:3478/udp -p 49152-65535:49152-65535/udp  --env-file /root/app/services/frp/.env frps:0.64.0
 ExecStop=docker stop frps
 TimeoutStartSec=30
 
