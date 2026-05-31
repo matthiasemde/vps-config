@@ -1,0 +1,95 @@
+services:
+  frps:
+    container_name: frps
+    image: snowdreamtech/frps:0.69.0@sha256:7125cbfec057454eff464247dc900ebb100fd51fa2cd2b7d570caee689c1b87b
+    command:
+      - frps
+      - -c
+      - /etc/frp/frps.toml
+    env_file:
+      - ./services/frp/.env
+    volumes:
+      - ./services/frp/frps.toml:/etc/frp/frps.toml:ro
+    ports:
+      - "7000:7000"
+      - "25565:25565"
+      - "7777:7777/tcp"
+      - "7777:7777/udp"
+      - "8888:8888/tcp"
+      - "8888:8888/udp"
+      - "7881:7881"
+      - "50100-50200:50100-50200/udp"
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.tcp.routers.frp-home.entrypoints=websecure"
+      - "traefik.tcp.routers.frp-home.rule=HostSNI(`*.emdecloud.de`)"
+      - "traefik.tcp.routers.frp-home.tls.passthrough=true"
+      - "traefik.tcp.routers.frp-home.service=frp-home"
+      - "traefik.tcp.services.frp-home.loadbalancer.server.port=8443"
+
+      - "traefik.tcp.routers.frp-remote.entrypoints=websecure"
+      - "traefik.tcp.routers.frp-remote.rule=HostSNI(`*.remote.emdecloud.de`)"
+      - "traefik.tcp.routers.frp-remote.tls.passthrough=true"
+      - "traefik.tcp.routers.frp-remote.service=frp-remote"
+      - "traefik.tcp.services.frp-remote.loadbalancer.server.port=9443"
+
+      - "traefik.http.routers.frps-dashboard.rule=Host(`frps.vps.emdecloud.de`)"
+      - "traefik.http.routers.frps-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.frps-dashboard.tls.certresolver=myresolver"
+      - "traefik.http.routers.frps-dashboard.tls.domains[0].main=frps.vps.emdecloud.de"
+      - "traefik.http.routers.frps-dashboard.service=frps-dashboard"
+      - "traefik.http.services.frps-dashboard.loadbalancer.server.port=7500"
+    restart: unless-stopped
+    networks:
+      - traefik
+
+  traefik:
+    container_name: traefik
+    image: traefik:v3.7.1@sha256:6b9cbca6fac42ab0075f5437d8dc1685cfd188626d8d515839ea94f8b6271c42
+    volumes:
+      - ./services/traefik/traefik.toml:/etc/traefik/traefik.toml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-certs:/certs
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+    networks:
+      - traefik
+
+  uptime-kuma:
+    container_name: uptime-kuma
+    image: louislam/uptime-kuma:2.3.2@sha256:9aeb4e51d038047f414309c77a1af553281ca535723cb88907d907269d0a908e
+    volumes:
+      - uptime-kuma-data:/app/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.uptime-kuma.rule=Host(`status.vps.emdecloud.de`)"
+      - "traefik.http.routers.uptime-kuma.entrypoints=websecure"
+      - "traefik.http.routers.uptime-kuma.tls.certresolver=myresolver"
+      - "traefik.http.routers.uptime-kuma.tls.domains[0].main=status.vps.emdecloud.de"
+      - "traefik.http.services.uptime-kuma.loadbalancer.server.port=3001"
+    restart: unless-stopped
+    networks:
+      - traefik
+
+  snowflake-proxy:
+    container_name: snowflake-proxy
+    image: containers.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake:latest@sha256:ce1b63f978d58f565bd5f62a2cc5e5f3c7de64b569468296a6c3667c0bfa7f97
+    network_mode: host
+    # For a full list of Snowflake Proxy CLI parameters see
+    # https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/tree/main/proxy?ref_type=heads#running-a-standalone-snowflake-proxy
+    command: ["-ephemeral-ports-range", "30000:50000"]
+    restart: unless-stopped
+
+networks:
+  traefik:
+    name: traefik
+    enable_ipv6: true
+
+volumes:
+  uptime-kuma-data:
+    name: uptime-kuma-data
+  traefik-certs:
+    name: traefik-certs
