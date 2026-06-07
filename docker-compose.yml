@@ -23,7 +23,7 @@ services:
       - "traefik.enable=true"
 
       - "traefik.tcp.routers.frp-home.entrypoints=websecure"
-      - "traefik.tcp.routers.frp-home.rule=HostSNI(`*.emdecloud.de`)"
+      - "traefik.tcp.routers.frp-home.rule=HostSNI(`*.emdecloud.de`) || HostSNI(`emdecloud.de`)"
       - "traefik.tcp.routers.frp-home.tls.passthrough=true"
       - "traefik.tcp.routers.frp-home.service=frp-home"
       - "traefik.tcp.services.frp-home.loadbalancer.server.port=8443"
