@@ -9,6 +9,7 @@
       "pinDigests": true,
       "automerge": true,
       "minimumReleaseAge": "7 days"
+      "minimumReleaseAgeBehaviour": "timestamp-optional"
     }
   ]
 }
