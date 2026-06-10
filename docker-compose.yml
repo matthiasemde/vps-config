@@ -1,7 +1,7 @@
 services:
   frps:
     container_name: frps
-    image: snowdreamtech/frps:0.69.0@sha256:7125cbfec057454eff464247dc900ebb100fd51fa2cd2b7d570caee689c1b87b
+    image: snowdreamtech/frps:0.69.1@sha256:dd38562286af13efe67d9bc61631daa4e98af362b7c82ebc2db9073f0c4b2012
     command:
       - frps
       - -c
