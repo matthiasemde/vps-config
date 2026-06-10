@@ -1,0 +1,36 @@
+name: Repository Validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ github.workspace }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create CI env file
+        run: |
+          mkdir -p services/frp
+          cat > services/frp/.env <<'EOF'
+          FRP_TOKEN=ci-placeholder
+          FRP_DASHBOARD_PWD=ci-placeholder
+          EOF
+
+      - name: Validate bootstrap script syntax
+        run: bash -n bootstrap.sh
+
+      - name: Validate docker compose config
+        run: docker compose -f docker-compose.yml config
