@@ -8,7 +8,7 @@
       "matchDatasources": ["docker"],
       "pinDigests": true,
       "automerge": true,
-      "minimumReleaseAge": "7 days"
+      "minimumReleaseAge": "7 days",
       "minimumReleaseAgeBehaviour": "timestamp-optional"
     }
   ]
