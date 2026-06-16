@@ -31,4 +31,13 @@ exposedByDefault = false
 network = "traefik"
 
 [api]
-dashboard = false
+dashboard = true
+insecure = true
+
+################################################################
+# Load configurations from middleware.toml
+################################################################
+[providers.file]
+filename = "/etc/traefik/middlewares.toml"
+watch = true
+

@@ -23,13 +23,13 @@ services:
       - "traefik.enable=true"
 
       - "traefik.tcp.routers.frp-home.entrypoints=websecure"
-      - "traefik.tcp.routers.frp-home.rule=HostSNI(`*.emdecloud.de`) || HostSNI(`emdecloud.de`)"
+      - "traefik.tcp.routers.frp-home.rule=HostSNIRegexp(`^.*emdecloud\\.de.*`)"
       - "traefik.tcp.routers.frp-home.tls.passthrough=true"
       - "traefik.tcp.routers.frp-home.service=frp-home"
       - "traefik.tcp.services.frp-home.loadbalancer.server.port=8443"
 
       - "traefik.tcp.routers.frp-remote.entrypoints=websecure"
-      - "traefik.tcp.routers.frp-remote.rule=HostSNI(`*.remote.emdecloud.de`)"
+      - "traefik.tcp.routers.frp-remote.rule=HostSNIRegexp(`^.*remote\\.emdecloud\\.de.*`)"
       - "traefik.tcp.routers.frp-remote.tls.passthrough=true"
       - "traefik.tcp.routers.frp-remote.service=frp-remote"
       - "traefik.tcp.services.frp-remote.loadbalancer.server.port=9443"
@@ -39,6 +39,7 @@ services:
       - "traefik.http.routers.frps-dashboard.tls.certresolver=myresolver"
       - "traefik.http.routers.frps-dashboard.tls.domains[0].main=frps.vps.emdecloud.de"
       - "traefik.http.routers.frps-dashboard.service=frps-dashboard"
+      - "traefik.http.routers.frps-dashboard.middlewares=authentik-forward-auth@file"
       - "traefik.http.services.frps-dashboard.loadbalancer.server.port=7500"
     restart: unless-stopped
     networks:
@@ -49,6 +50,7 @@ services:
     image: traefik:v3.7.4@sha256:fcdef599e6259359833dd2e1d49f9e964f66825d69bd3dd468f51102ce013d03
     volumes:
       - ./services/traefik/traefik.toml:/etc/traefik/traefik.toml:ro
+      - ./services/traefik/middlewares.toml:/etc/traefik/middlewares.toml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-certs:/certs
     ports:
@@ -57,6 +59,14 @@ services:
     restart: unless-stopped
     networks:
       - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.vps.emdecloud.de`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls.certresolver=myresolver"
+      - "traefik.http.routers.traefik.tls.domains[0].main=traefik.vps.emdecloud.de"
+      - "traefik.http.routers.traefik.middlewares=authentik-forward-auth@file"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
 
   uptime-kuma:
     container_name: uptime-kuma
@@ -82,6 +92,24 @@ services:
     # https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/tree/main/proxy?ref_type=heads#running-a-standalone-snowflake-proxy
     command: ["-ephemeral-ports-range", "30000:50000"]
     restart: unless-stopped
+
+  authentik-outpost-infra:
+    container_name: authentik-outpost-infra
+    image: ghcr.io/goauthentik/proxy:2026.5.2@sha256:954fbd562282b46b6c646b0e50bf069d7e31c1139098e44f92eb7d63336c07f8
+    networks:
+      - traefik
+    environment:
+      AUTHENTIK_HOST: https://auth.emdecloud.de
+      AUTHENTIK_INSECURE: "false"
+      AUTHENTIK_TOKEN: ${AUTHENTIK_TOKEN}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.authentik-outpost-infra.rule=Host(`authentik-outpost-infra.vps.emdecloud.de`) && PathPrefix(`/outpost.goauthentik.io/`)"
+      - "traefik.http.routers.authentik-outpost-infra.entrypoints=websecure"
+      - "traefik.http.routers.authentik-outpost-infra.tls.certresolver=myresolver"
+      - "traefik.http.routers.authentik-outpost-infra.tls.domains[0].main=authentik-outpost-infra.vps.emdecloud.de"
+      - "traefik.http.routers.authentik-outpost-infra.service=authentik-outpost-infra"
+      - "traefik.http.services.authentik-outpost-infra.loadbalancer.server.port=9000"
 
 networks:
   traefik:

@@ -4,8 +4,6 @@ bindPort = 7000
 # Enable dashboard to monitor connections
 webServer.addr = "0.0.0.0"
 webServer.port = 7500
-webServer.user = "minad"
-webServer.password = "{{ .Envs.FRP_DASHBOARD_PWD }}"
 
 # Authentication token (must match in frpc)
 auth.method = "token"
