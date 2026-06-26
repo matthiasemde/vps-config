@@ -119,5 +119,7 @@ networks:
 volumes:
   uptime-kuma-data:
     name: uptime-kuma-data
+    external: true # volume already exists
   traefik-certs:
     name: traefik-certs
+    external: true # volume already exists
