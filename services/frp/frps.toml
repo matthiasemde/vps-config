@@ -1,3 +1,6 @@
+# General frps options
+log.level = "warn"
+
 # The port frpc clients will connect to
 bindPort = 7000
 
