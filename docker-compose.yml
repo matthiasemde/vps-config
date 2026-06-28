@@ -27,12 +27,14 @@ services:
       - "traefik.tcp.routers.frp-home.tls.passthrough=true"
       - "traefik.tcp.routers.frp-home.service=frp-home"
       - "traefik.tcp.services.frp-home.loadbalancer.server.port=8443"
+      - "traefik.tcp.services.frp-home.loadbalancer.serversTransport=frp@file"
 
       - "traefik.tcp.routers.frp-remote.entrypoints=websecure"
       - "traefik.tcp.routers.frp-remote.rule=HostSNIRegexp(`^.*remote\\.emdecloud\\.de.*`)"
       - "traefik.tcp.routers.frp-remote.tls.passthrough=true"
       - "traefik.tcp.routers.frp-remote.service=frp-remote"
       - "traefik.tcp.services.frp-remote.loadbalancer.server.port=9443"
+      - "traefik.tcp.services.frp-remote.loadbalancer.serversTransport=frp@file"
 
       - "traefik.http.routers.frps-dashboard.rule=Host(`frps.vps.emdecloud.de`)"
       - "traefik.http.routers.frps-dashboard.entrypoints=websecure"
@@ -50,7 +52,8 @@ services:
     image: traefik:v3.7.5@sha256:e4d98158c01ad752fc1071d4e9573788747230d902cdde00a772516e692d07c9
     volumes:
       - ./services/traefik/traefik.toml:/etc/traefik/traefik.toml:ro
-      - ./services/traefik/middlewares.toml:/etc/traefik/middlewares.toml:ro
+      - ./services/traefik/middlewares.toml:/etc/traefik/dynamic/middlewares.toml:ro
+      - ./services/traefik/transports.toml:/etc/traefik/dynamic/transports.toml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-certs:/certs
     ports:

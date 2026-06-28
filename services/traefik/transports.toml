@@ -1,0 +1,3 @@
+[tcp.serversTransports.frp]
+[tcp.serversTransports.frp.proxyProtocol]
+version = 2
