@@ -1,0 +1,123 @@
+// Mey Alloy config - collects local metrics/logs and forwards to mahler via mTLS.
+livedebugging {
+	enabled = false
+}
+
+logging {
+	level  = "warn"
+	format = "logfmt"
+}
+
+// Discovery
+discovery.docker "containers" {
+	host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "docker_logs" {
+  targets = discovery.docker.containers.targets
+
+  // Rewrite the container name by adding a prefix and suffix.
+  // __meta_docker_container_name usually starts with "/".
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/?(.*)"
+    replacement   = "docker-${1}.service"
+    target_label  = "unit"
+  }
+
+  // Add static labels
+  rule {
+    target_label = "host"
+    replacement  = "mey"
+  }
+}
+
+// -- Metrics ------------------------------------------------------------------
+
+prometheus.scrape "node_exporter" {
+	job_name   = "node-exporter"
+	targets    = [{__address__ = "mey:9100"}]
+	forward_to = [prometheus.relabel.node_exporter.receiver]
+}
+
+prometheus.relabel "node_exporter" {
+	forward_to = [prometheus.remote_write.gateway.receiver]
+
+	rule {
+		target_label = "host"
+		replacement  = "mey"
+	}
+
+	rule {
+		action = "labeldrop"
+		regex  = "instance"
+	}
+}
+
+prometheus.remote_write "gateway" {
+	endpoint {
+		url = "https://alloy-metrics.emdecloud.de/api/v1/metrics/write"
+
+		tls_config {
+			ca_file   = "/etc/alloy/ca.crt"
+			cert_file = "/etc/alloy/client.crt"
+			key_file  = "/etc/alloy/client.key"
+		}
+	}
+}
+
+// -- Logs ---------------------------------------------------------------------
+
+loki.source.journal "default" {
+	forward_to    = [loki.write.gateway.receiver]
+	relabel_rules = loki.relabel.journal_labels.rules
+}
+
+loki.relabel "journal_labels" {
+	forward_to = []
+
+	rule {
+		source_labels = ["__journal__systemd_unit"]
+		target_label  = "unit"
+	}
+
+	rule {
+		source_labels = ["__journal__hostname"]
+		target_label  = "host"
+	}
+
+	rule {
+		source_labels = ["__journal_priority_keyword"]
+		target_label  = "level"
+	}
+
+	rule {
+		source_labels = ["__journal_priority"]
+		target_label  = "level_int"
+	}
+
+	rule {
+		source_labels = ["__journal__cmdline"]
+		target_label  = "cmd"
+	}
+}
+
+// Collect logs from docker containers
+loki.source.docker "containers" {
+  host    = "unix:///var/run/docker.sock"
+  targets = discovery.relabel.docker_logs.output
+
+  forward_to = [ loki.write.gateway.receiver ]
+}
+
+loki.write "gateway" {
+	endpoint {
+		url = "https://alloy-logs.emdecloud.de/loki/api/v1/push"
+
+		tls_config {
+			ca_file   = "/etc/alloy/ca.crt"
+			cert_file = "/etc/alloy/client.crt"
+			key_file  = "/etc/alloy/client.key"
+		}
+	}
+}

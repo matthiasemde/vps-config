@@ -1,6 +1,6 @@
 services:
   frps:
-    container_name: frps
+    container_name: frp--server
     image: snowdreamtech/frps:0.69.1@sha256:dd38562286af13efe67d9bc61631daa4e98af362b7c82ebc2db9073f0c4b2012
     command:
       - frps
@@ -46,7 +46,7 @@ services:
       - traefik
 
   traefik:
-    container_name: traefik
+    container_name: traefik--server
     image: traefik:v3.7.5@sha256:e4d98158c01ad752fc1071d4e9573788747230d902cdde00a772516e692d07c9
     volumes:
       - ./services/traefik/traefik.toml:/etc/traefik/traefik.toml:ro
@@ -69,7 +69,7 @@ services:
       - "traefik.http.services.traefik.loadbalancer.server.port=8080"
 
   uptime-kuma:
-    container_name: uptime-kuma
+    container_name: uptime-kuma--app
     image: louislam/uptime-kuma:2.4.0@sha256:91e963bfda569ba115206e843febb446f473ab525add4e08b2b9e3beffa16985
     volumes:
       - uptime-kuma-data:/app/data
@@ -85,7 +85,7 @@ services:
       - traefik
 
   snowflake-proxy:
-    container_name: snowflake-proxy
+    container_name: snowflake-proxy--server
     image: containers.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake:v2.14.1@sha256:1ded2a9bbb5d67d41f3c11f6b392b8a2735964e7b070e1bcb1278fddf28f90a4
     network_mode: host
     # For a full list of Snowflake Proxy CLI parameters see
@@ -94,7 +94,7 @@ services:
     restart: unless-stopped
 
   authentik-outpost-infra:
-    container_name: authentik-outpost-infra
+    container_name: authentik--outpost-infra
     image: ghcr.io/goauthentik/proxy:2026.5.3@sha256:7b6b69cd3d266809890498bd2b74576d2303b6235c4a1e63a0c60d7078aa8302
     networks:
       - traefik
@@ -110,6 +110,38 @@ services:
       - "traefik.http.routers.authentik-outpost-infra.tls.domains[0].main=authentik-outpost-infra.vps.emdecloud.de"
       - "traefik.http.routers.authentik-outpost-infra.service=authentik-outpost-infra"
       - "traefik.http.services.authentik-outpost-infra.loadbalancer.server.port=9000"
+    restart: unless-stopped
+
+  alloy:
+    container_name: grafana--alloy
+    image: grafana/alloy:v1.17.0@sha256:1f370747567b3aec7850ff9e0b22c27dde6366c5cea53a08832a524cef4383f1
+    restart: unless-stopped
+    networks:
+      - traefik
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/log/journal:/var/log/journal:ro
+      - /:/rootsfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+      - /etc/machine-id:/etc/machine-id:ro
+      - ./services/alloy:/etc/alloy:ro"
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy
+      - /etc/alloy/config.alloy
+      - --disable-reporting
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.alloy.rule=Host(`alloy.vps.emdecloud.de`)"
+      - "traefik.http.routers.alloy.entrypoints=websecure"
+      - "traefik.http.routers.alloy.tls.certresolver=myresolver"
+      - "traefik.http.routers.alloy.tls.domains[0].main=alloy.vps.emdecloud.de"
+      - "traefik.http.routers.alloy.middlewares=authentik-forward-auth@file"
+      - "traefik.http.services.alloy.loadbalancer.server.port=12345"
 
 networks:
   traefik:
