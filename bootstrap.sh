@@ -3,6 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 REPO_DIR="$SCRIPT_DIR"
+USER="$(id -u)"
+GROUP="$(id -g)"
 ENV_FILE="$REPO_DIR/services/frp/.env"
 
 # 1) Install Docker if not present
@@ -174,6 +176,8 @@ Requires=docker.service
 
 [Service]
 Type=oneshot
+User=${USER}
+Group=${GROUP}
 WorkingDirectory=${REPO_DIR}
 ExecStart=/bin/bash -c 'git pull origin main && docker compose up -d --pull always --remove-orphans'
 UNIT
