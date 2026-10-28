@@ -89,7 +89,7 @@ services:
 
   snowflake-proxy:
     container_name: snowflake-proxy--server
-    image: containers.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake:v2.15.2@sha256:b08fefd87753f95a6d05b708a1aafc0a675ac670dbfd86687b08bf91bf9e87d8
+    image: containers.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake:v2.15.3@sha256:045186c89b7b97e2a6c5d0f463583750ece9ccdf3461ed4f92f063f5ad65e958
     network_mode: host
     # For a full list of Snowflake Proxy CLI parameters see
     # https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/tree/main/proxy?ref_type=heads#running-a-standalone-snowflake-proxy
