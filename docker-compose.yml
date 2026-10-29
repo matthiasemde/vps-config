@@ -117,7 +117,7 @@ services:
 
   alloy:
     container_name: grafana--alloy
-    image: grafana/alloy:v1.21.0@sha256:57b68495324d159cb6ad422176d0c5186ca55f4743817cffab9a4113d865070b
+    image: grafana/alloy:v1.21.1@sha256:4c831764272dbcee838d85e2aec962f8f5c9b3b372914c366736b0b212a2adef
     restart: unless-stopped
     networks:
       - traefik
